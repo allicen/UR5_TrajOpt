@@ -1,25 +1,18 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 
 import sys
-import time
-from math import sin, cos, sqrt, atan
+sys.path.insert(0,'/home/administrator/Repos/manipulator/geom_ws/devel/lib/python3/dist-packages')
+
 import numpy as np
-np.set_printoptions(threshold=sys.maxsize)
+# np.set_printoptions(threshold=sys.maxsize)
 
 import rospy
-from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
-from sensor_msgs.msg import CompressedImage
 
 import cv2
-import io
-import base64
 from cv_bridge import CvBridge, CvBridgeError
 
 from std_msgs.msg import String
-from ur5_husky_camera.msg import ImageCamera
-
-import matplotlib.pyplot as plt
 
 class Camera():
 
@@ -55,68 +48,14 @@ class Camera():
         
 
         # Images from RealSense 
-        rospy.Subscriber("/pub/realsense_gripper/color/image_raw", ImageCamera, self.camera_gripper)
-        rospy.Subscriber("/realsense_gripper/color/image_raw/compressed", CompressedImage, self.camera_gripper)
-
-        rospy.Subscriber("/zed_node/right_raw/image_raw_color/compressed", ImageCamera, self.camera_robot)
         rospy.Subscriber("/realsense_gripper/aligned_depth_to_color/image_raw", Image, self.camera_gripper_depth)
-        rospy.Subscriber("/pub/realsense_gripper/aligned_depth_to_color/image_raw", Image, self.camera_gripper_depth)
 
-        rospy.Subscriber("/rviz1/camera1/image", Image, self.camera_rviz)
-        self.pub_rviz = rospy.Publisher('rviz_camera', ImageCamera, queue_size=10)
-
-        self.pub_gripper = rospy.Publisher('gripper_camera', ImageCamera, queue_size=10)
-        self.pub_gripper_depth = rospy.Publisher('gripper_camera_depth', ImageCamera, queue_size=10)
-        self.pub_robot = rospy.Publisher('robot_camera', ImageCamera, queue_size=10)
         self.pub_gripper_state = rospy.Publisher('gripper_state_camera_depth', String, queue_size=10)
         self.pub_gripper_depth_small = rospy.Publisher('gripper_camera_depth_image', Image, queue_size=10)
+
         self.rate = rospy.Rate(30)
 
         rospy.on_shutdown(self.shutdown)
-
-    def camera_rviz(self, msg):
-        try:
-            cv_image = self.cv_bridge.imgmsg_to_cv2(msg, "bgr8")
-            self.pub_rviz.publish(self.createMessage(cv_image))
-        except CvBridgeError as e:
-            rospy.logerr("CvBridge Error: {0}".format(e))
-
-
-    def base64decode(self, image):
-        decoded_data = base64.b64decode(image)
-        np_data = np.fromstring(decoded_data,np.uint8)
-        img = cv2.imdecode(np_data,cv2.IMREAD_UNCHANGED)
-        return img
-
-
-    def createMessage(self, image):
-        img = self.cv_bridge.cv2_to_imgmsg(image)
-        _, buffer_img = cv2.imencode('.jpg', image)
-
-        msg_img = ImageCamera()
-        msg_img.data = base64.b64encode(buffer_img).decode("utf-8")
-        msg_img.encoding = 'base64'
-        msg_img.width = img.width
-        msg_img.height = img.height
-        return msg_img
-
-
-    def camera_gripper(self, msg):
-        if self.rosbag:
-            try:
-                cv_image = self.cv_bridge.compressed_imgmsg_to_cv2(msg, "bgr8")
-                self.pub_gripper.publish(self.createMessage(cv_image))
-            except CvBridgeError as e:
-                rospy.logerr("CvBridge Error: {0}".format(e))
-        else:
-            self.pub_gripper.publish(msg)
-
-
-    def camera_robot(self, msg):
-        if self.rosbag:
-            pass
-        else:
-            self.pub_robot.publish(msg)
 
 
     def camera_gripper_depth(self, msg):
@@ -134,8 +73,9 @@ class Camera():
 
 
     def process_depth_image(self, cv_image):
-        depth_array = np.array(cv_image, dtype=np.float32)
 
+        depth_array = np.array(cv_image, dtype=np.float32)
+       
         bl = cv2.medianBlur(depth_array, 5)
 
         hsv_min = np.array((0, 0, 0), np.uint8)
@@ -144,7 +84,9 @@ class Camera():
         img = cv2.cvtColor(bl, cv2.COLOR_GRAY2BGR)
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
+    
         thresh = cv2.inRange(hsv, hsv_min, hsv_max)
+
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
         dilated = cv2.dilate(thresh, kernel)
 
@@ -273,7 +215,6 @@ class Camera():
         time_prev = time_now
 
         while not rospy.is_shutdown():
-
             # set delay for get image from camera
             now = rospy.Time.now()
             delta_time = now - time_prev
@@ -311,16 +252,6 @@ class Camera():
                 output = cv2.resize(img_sent_rviz, (300, int(self.height * 300 / self.width)))
                 self.pub_gripper_depth_small.publish(self.cv_bridge.cv2_to_imgmsg(output))
 
-                # add text
-                cv2.putText(img,'Gripper Line', bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
-
-                # send image to GUI
-                msg_pub = self.createMessage(img)
-                self.pub_gripper_depth.publish(msg_pub)
-                
-                cv2.imshow("depth", output)
-
-            cv2.waitKey(3)
             self.rate.sleep()
 
     def shutdown(self):

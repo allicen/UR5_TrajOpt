@@ -147,6 +147,45 @@ class Camera():
         thresh = cv2.inRange(hsv, hsv_min, hsv_max)
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
         dilated = cv2.dilate(thresh, kernel)
+        
+        # cnts, _ = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+
+        # for c in cnts:
+        #     x,y,w,h = cv2.boundingRect(c)
+        #     ROI = depth_array[y:y+h, x:x+w]
+        #     mean, STD  = cv2.meanStdDev(ROI)
+
+        #     offset = 0.2
+        #     clipped = np.clip(depth_array, mean - offset*STD, mean + offset*STD).astype(np.uint8)
+        #     depth_array = cv2.normalize(clipped, clipped, 0, 255, norm_type=cv2.NORM_MINMAX)
+
+
+        
+        # return depth_array
+
+
+        cv2.normalize(bl, bl, 0, 1, cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+        # cv2.normalize(depth_array, depth_array, 0, 1, cv2.NORM_MINMAX)
+        # return depth_array
+
+        colormap = plt.get_cmap('inferno')
+        heatmap = (colormap(bl) * 2**16).astype(np.uint16)[:,:,:3]
+        heatmap = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
+
+        return heatmap
+       
+        bl = cv2.medianBlur(depth_array, 5)
+
+        hsv_min = np.array((0, 0, 0), np.uint8)
+        hsv_max = np.array((0, 0, 0), np.uint8)
+        
+        img = cv2.cvtColor(bl, cv2.COLOR_GRAY2BGR)
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+        thresh = cv2.inRange(hsv, hsv_min, hsv_max)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
+        dilated = cv2.dilate(thresh, kernel)
 
         contours_prev, _ = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -286,8 +325,8 @@ class Camera():
                 img = self.process_depth_image(self.ImageGripperDepth)
 
                 # add info
-                cv2.line(img, self.gripper_border_start, self.gripper_border_end, (255,0,0), self.line_height)
-                cv2.line(img, self.gripper_close_start, self.gripper_close_end, (255,0,0), self.line_height)
+                # cv2.line(img, self.gripper_border_start, self.gripper_border_end, (255,0,0), self.line_height)
+                # cv2.line(img, self.gripper_close_start, self.gripper_close_end, (255,0,0), self.line_height)
 
                 # Text style
                 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -299,20 +338,20 @@ class Camera():
 
                 # send to Image
                 img_sent_rviz = img.copy()
-                cv2.putText(img_sent_rviz,'Obj in gripper: ', (50, 150), font, 4, (255,0,0), 12, lineType)
-                if self.gripper_busy:
-                    cv2.putText(img_sent_rviz,'YES', (1000, 150), font, 4, (0,255,0), 12, lineType)
-                else:
-                    cv2.putText(img_sent_rviz,'NO', (1000, 150), font, 4, (0,0,255), 12, lineType)
+                # cv2.putText(img_sent_rviz,'Obj in gripper: ', (50, 150), font, 4, (255,0,0), 12, lineType)
+                # if self.gripper_busy:
+                #     cv2.putText(img_sent_rviz,'YES', (1000, 150), font, 4, (0,255,0), 12, lineType)
+                # else:
+                #     cv2.putText(img_sent_rviz,'NO', (1000, 150), font, 4, (0,0,255), 12, lineType)
 
                 # Img sent to rviz
-                img_sent_rviz = img_sent_rviz.astype(np.uint8)
-                cv2.convertScaleAbs(img_sent_rviz, img_sent_rviz, 255, 0)
-                output = cv2.resize(img_sent_rviz, (300, int(self.height * 300 / self.width)))
+                # img_sent_rviz = img_sent_rviz.astype(np.uint8)
+                # cv2.convertScaleAbs(img_sent_rviz, img_sent_rviz, 255, 0)
+                output = cv2.resize(img_sent_rviz, (800, int(self.height * 800 / self.width)))
                 self.pub_gripper_depth_small.publish(self.cv_bridge.cv2_to_imgmsg(output))
 
                 # add text
-                cv2.putText(img,'Gripper Line', bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
+                # cv2.putText(img,'Gripper Line', bottomLeftCornerOfText, font, fontScale, fontColor, thickness, lineType)
 
                 # send image to GUI
                 msg_pub = self.createMessage(img)
