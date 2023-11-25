@@ -1,0 +1,14 @@
+int32 id
+string name
+string fileName
+float64 scale
+float64 x
+float64 y
+float64 z
+float64 offsetX
+float64 offsetY
+float64 offsetZ
+float64 rotateX
+float64 rotateY
+float64 rotateZ
+bool fileUpload

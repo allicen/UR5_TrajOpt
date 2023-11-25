@@ -1,0 +1,8 @@
+string[] meshes_delete
+string[] boxes_delete
+---
+string message
+string[] mesh_names_success
+string[] mesh_names_failed
+string[] box_names_success
+string[] box_names_failed

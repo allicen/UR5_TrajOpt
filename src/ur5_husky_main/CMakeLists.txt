@@ -89,6 +89,8 @@ add_message_files(
     Gripper.msg
     Color.msg
     ManipulatorState.msg
+    BoxEntity.msg
+    MeshEntity.msg
 #   Message1.msg
 #   Message2.msg
 )
@@ -111,6 +113,8 @@ add_service_files(
   GripperMoveRobot.srv
   GetGripperState.srv
   Settings.srv
+  ObstacleGroup.srv
+  ObstacleDeleteGroup.srv
 )
 
 ## Generate actions in the 'action' folder

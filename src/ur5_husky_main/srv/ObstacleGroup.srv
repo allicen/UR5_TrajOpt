@@ -1,0 +1,10 @@
+int32 id
+string name
+ur5_husky_main/MeshEntity[] meshList
+ur5_husky_main/BoxEntity[] boxList
+---
+string message
+int32[] mesh_ids_success
+int32[] mesh_ids_failed
+int32[] box_ids_success
+int32[] box_ids_failed
