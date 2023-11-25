@@ -6,3 +6,4 @@ string[] mesh_names_success
 string[] mesh_names_failed
 string[] box_names_success
 string[] box_names_failed
+float32 timer

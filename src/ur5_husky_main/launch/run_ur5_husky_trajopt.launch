@@ -16,7 +16,7 @@
   <arg name="script" default=""/> <!-- Название сценария -->
   <arg name="use_robot" default="false"/> <!-- Использовать URSim или UR5 -->
   <arg name="rosbag" default="false" /> <!-- True, если планируется проигрывание сенсорной информации из росбэга -->
-  <arg name="delay_loop_rate" default="1.0" /> <!-- Любое положительное число. Не может быть 0! -->
+  <arg name="delay_loop_rate" default="50.0" /> <!-- Любое положительное число. Не может быть 0! -->
   <arg name="ur_speed" default="0.1" />
   <arg name="ur_acceleration" default="10.0" />
   <arg name="ur_blend" default="0.0" />
