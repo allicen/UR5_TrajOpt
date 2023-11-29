@@ -47,6 +47,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <chrono>
 #include <vector>
 #include <string>
+#include <ctime>
 
 using namespace tesseract_rosutils;
 
@@ -165,6 +166,20 @@ UR5TrajoptResponce UR5Trajopt::run() {
 
   auto trajopt_solver_profile = std::make_shared<TrajOptDefaultSolverProfile>();
   trajopt_solver_profile->opt_info.max_iter = 100;
+  trajopt_solver_profile->opt_info.log_results = true;
+
+  time_t rawtime;
+  struct tm * timeinfo;
+  char buffer[80];
+
+  time (&rawtime);
+  timeinfo = localtime(&rawtime);
+  strftime(buffer, sizeof(buffer),"%d-%m-%Y-%H-%M-%S",timeinfo);
+  std::string datetime(buffer);
+
+  std::cout << "datetime: " << datetime << std::endl;
+
+  trajopt_solver_profile->opt_info.log_dir = "/home/lena/trajopt/logs/solver";
 
   profiles->addProfile<TrajOptSolverProfile>(TRAJOPT_DEFAULT_NAMESPACE, "UR5", trajopt_solver_profile);
 
