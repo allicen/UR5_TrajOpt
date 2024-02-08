@@ -316,7 +316,7 @@ UR5TrajoptResponce UR5Trajopt::run() {
   // // Если значение true, коэффициенты заслуг будут завышены только для тех ограничений, которые не сработали.
   // // Это может помочь, когда ограничений много
   // trajopt_solver_profile->opt_info.inflate_constraints_individually = true;
-  // trajopt_solver_profile->opt_info.trust_box_size = true;  // текущий размер доверительного региона (по компонентам)
+  // trajopt_solver_profile->opt_info.trust_box_size = 0;  // текущий размер доверительного региона (по компонентам)
 
   // Заносите результаты в файл
   trajopt_solver_profile->opt_info.log_results = true;
