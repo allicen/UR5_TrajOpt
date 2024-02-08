@@ -140,6 +140,10 @@ UR5TrajoptResponce UR5Trajopt::run() {
   auto composite_profile = std::make_shared<TrajOptDefaultCompositeProfile>();
 
   // Тип контактного теста, который необходимо выполнить: FIRST, CLOSEST, ALL
+  // FIRST - Возврат при первом контакте для любой пары объектов
+  // CLOSEST - Возвращает глобальный минимум для пары объектов
+  // ALL - Возвращает все контакты для пары объектов
+  // LIMITED - Возвращает ограниченный набор контактов для пары объектов
   composite_profile->contact_test_type = tesseract_collision::ContactTestType::ALL; // default = ALL
 
   // Если значение true, то для всех временных шагов будет применена общая стоимость скорости с целевым значением 0
