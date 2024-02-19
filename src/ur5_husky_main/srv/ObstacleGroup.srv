@@ -1,0 +1,17 @@
+int32 id
+string name
+ur5_husky_main/MeshEntity[] meshList
+ur5_husky_main/BoxEntity[] boxList
+float32 x
+float32 y
+float32 z
+float32 offsetX
+float32 offsetY
+float32 offsetZ
+---
+string message
+float32 timer
+int32[] mesh_ids_success
+int32[] mesh_ids_failed
+int32[] box_ids_success
+int32[] box_ids_failed

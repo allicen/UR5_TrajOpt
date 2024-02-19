@@ -40,6 +40,8 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_solver_profile.h>
 #include <tesseract_task_composer/planning/profiles/contact_check_profile.h>
 
+#include <tesseract_motion_planners/trajopt/trajopt_collision_config.h>
+
 #include <tesseract_visualization/trajectory_player.h>
 
 #include <iostream>
@@ -47,6 +49,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <chrono>
 #include <vector>
 #include <string>
+#include <ctime>
 
 using namespace tesseract_rosutils;
 
@@ -121,52 +124,226 @@ UR5TrajoptResponce UR5Trajopt::run() {
   // Тип коллизии задается в настройках
   trajopt::CollisionEvaluatorType collisionCostConfigType;
   trajopt::CollisionEvaluatorType collisionConstraintConfigType;
-  // if (settings_config_.collision_cost_config_type == "SINGLE_TIMESTEP") {
-  //     collisionCostConfigType = trajopt::CollisionEvaluatorType::SINGLE_TIMESTEP;
-  // } else if (settings_config_.collision_cost_config_type == "CAST_CONTINUOUS") {
-  //     collisionCostConfigType = trajopt::CollisionEvaluatorType::CAST_CONTINUOUS;
-  // } else if (settings_config_.collision_constraint_config_type == "SINGLE_TIMESTEP") {
-  //     collisionConstraintConfigType = trajopt::CollisionEvaluatorType::SINGLE_TIMESTEP;
-  // } else if (settings_config_.collision_constraint_config_type == "CAST_CONTINUOUS") {
-  //     collisionConstraintConfigType = trajopt::CollisionEvaluatorType::CAST_CONTINUOUS;
-  // } else { // DISCRETE_CONTINUOUS - вариант по умолчанию
-      collisionCostConfigType = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
-      collisionConstraintConfigType = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
-  // }
+  // DISCRETE_CONTINUOUS - вариант по умолчанию
+  collisionCostConfigType = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
+  collisionConstraintConfigType = trajopt::CollisionEvaluatorType::DISCRETE_CONTINUOUS;
+
+
+  ////////      SETTINGS START      ///////////
+
+  /////////////////////////////////////////////
+  //                                         //
+  //   1. TrajOptDefaultCompositeProfile     //
+  //                                         //
+  /////////////////////////////////////////////
 
   auto composite_profile = std::make_shared<TrajOptDefaultCompositeProfile>();
-  // composite_profile->longest_valid_segment_length = 0.05;
-  // composite_profile->collision_cost_config.enabled = true;
-  composite_profile->collision_cost_config.type = collisionCostConfigType;
-  composite_profile->collision_cost_config.safety_margin = 0.005;
-  composite_profile->collision_cost_config.safety_margin_buffer = 0.01;
-  composite_profile->collision_cost_config.coeff = 50;
 
-  // composite_profile->collision_constraint_config.enabled = true;
-  composite_profile->collision_constraint_config.type = collisionConstraintConfigType;
-  composite_profile->collision_constraint_config.safety_margin = 0.0;
-  composite_profile->collision_constraint_config.safety_margin_buffer = 0.005;
-  composite_profile->collision_constraint_config.coeff = 10;
-  // composite_profile->smooth_velocities = true;
-  // composite_profile->smooth_accelerations = false;
-  // composite_profile->smooth_jerks = false;
-  // composite_profile->velocity_coeff = Eigen::VectorXd::Ones(1);
+  // Тип контактного теста, который необходимо выполнить: FIRST, CLOSEST, ALL
+  // FIRST - Возврат при первом контакте для любой пары объектов
+  // CLOSEST - Возвращает глобальный минимум для пары объектов
+  // ALL - Возвращает все контакты для пары объектов
+  // LIMITED - Возвращает ограниченный набор контактов для пары объектов
+  composite_profile->contact_test_type = tesseract_collision::ContactTestType::ALL; // default = ALL
+
+  // Если значение true, то для всех временных шагов будет применена общая стоимость скорости с целевым значением 0
+  composite_profile->smooth_velocities = true; // default = true
+
+  // Это значение по умолчанию для всех соединений, но позволяет вам взвешивать различные соединения
+  composite_profile->velocity_coeff = {}; // default = {}
+
+  // Если значение true, то для всех временных шагов будет применена общая стоимость ускорения с целевым значением 0
+  composite_profile->smooth_accelerations = true; // default = true
+
+  // Это значение по умолчанию для всех соединений, но позволяет вам взвешивать различные соединения
+  composite_profile->acceleration_coeff = {}; // default = {}
+
+  // Если значение true, то для всех временных шагов будет применена стоимость совместного рывка с целевым значением
+  composite_profile->smooth_jerks = true; // default = true
+
+  // Это значение по умолчанию для всех соединений, но позволяет вам взвешивать различные соединения
+  composite_profile->jerk_coeff = {}; // default = {}
+
+  // Если true, применяется стоимость, позволяющая избежать кинематических особенностей
+  composite_profile->avoid_singularity = false; // default = false
+
+  // Оптимизация веса, связанная с предотвращением кинематической сингулярности
+  composite_profile->avoid_singularity_coeff = 5.0; // default = 5.0
+
+  // Установите разрешение, при котором необходимо проверить действительность состояния для того, чтобы движение
+  // между двумя состояниями было осуществлено будет считаться действительным при последующей проверке траектории,
+  // возвращаемой trajopt Разрешение равно longest_valid_segment_fraction * state_space.getMaximumExtent()
+  // Примечание: Планировщик придерживается консервативного подхода либо longest_valid_segment_fraction или
+  // longest_valid_segment_length.
+  composite_profile->longest_valid_segment_fraction = 0.01; // default = 0.01
+
+  // Установите разрешение, при котором необходимо проверить действительность состояния для того, чтобы движение
+  // между двумя состояниями было осуществлено чтобы считаться действительным. Если If norm(state1 - state0) >
+  // longest_valid_segment_length. Примечание: Это преобразуется в longest_valid_segment_fraction.
+  // longest_valid_segment_fraction = longest_valid_segment_length / state_space.getMaximumExtent()
+  composite_profile->longest_valid_segment_length = 0.1; // default = 0.1
+
+  // Расстояния, ограничивающие столкновение специальных звеньев
+  composite_profile->special_collision_constraint = nullptr; // default = nullptr
+
+  // Информация о конфигурации для коллизий, которые моделируются как затраты
+  /////////////////////////////////////////////
+  //                                         //
+  //           CollisionCostConfig           //
+  //                                         //
+  /////////////////////////////////////////////
+
+  // Если значение true, к проблеме будет добавлено условие стоимости столкновения.
+  composite_profile->collision_cost_config.enabled = true; // default = true
+  
+  // Используйте взвешенную сумму для каждой пары связей. Это уменьшает количество уравнений, добавляемых к задаче
+  // Если установлено значение true, рекомендуется начинать с коэффициента, установленного равным единице
+  composite_profile->collision_cost_config.use_weighted_sum = false; // default = false
+  
+  // Тип вычислителя, который будет использоваться для проверки на столкновение.
+  composite_profile->collision_cost_config.type = collisionCostConfigType; // default = DISCRETE_CONTINUOUS
+  
+  // Максимальное расстояние, на котором будут оцениваться затраты на столкновение
+  composite_profile->collision_cost_config.safety_margin = 0.025; // default = 0.025
+  
+  // Расстояние за пределами buffer_margin, в котором будет оцениваться оптимизация коллизий.
+  // По умолчанию это значение равно 0 (фактически отключено) для учета затрат на коллизии.
+  composite_profile->collision_cost_config.safety_margin_buffer = 0.0; // default = 0.0
+  
+  // Коэффициент столкновения / вес
+  composite_profile->collision_cost_config.coeff = 20; // default = 20
+
+
+  // Информация о конфигурации для коллизий, которые моделируются как ограничения
+  /////////////////////////////////////////////
+  //                                         //
+  //        CollisionConstraintConfig        //
+  //                                         //
+  /////////////////////////////////////////////
+
+  // Если значение true, к проблеме будет добавлено условие стоимости столкновения
+  composite_profile->collision_constraint_config.enabled = true; // default = true
+
+  // Используйте взвешенную сумму для каждой пары связей. Это уменьшает количество уравнений, добавляемых к задаче
+  // Если установлено значение true, рекомендуется начинать с коэффициента, равного единице.
+  composite_profile->collision_constraint_config.use_weighted_sum = false; // default = false
+
+  // Тип вычислителя, который будет использоваться для проверки коллизий 
+  composite_profile->collision_constraint_config.type = collisionConstraintConfigType; // default = DISCRETE_CONTINUOUS
+  
+  // Максимальное расстояние, на котором будут оцениваться ограничения на столкновение.
+  composite_profile->collision_constraint_config.safety_margin = 0.01; // default = 0.01
+
+  // Расстояние за пределами safety_margin, на котором будет оцениваться оптимизация столкновения.
+  composite_profile->collision_constraint_config.safety_margin_buffer = 0.05; // default = 0.05
+
+  // Коэффициент столкновения/вес
+  composite_profile->collision_constraint_config.coeff = 20; // default = 20
+
+  // Добавление профиля в словарь
   profiles->addProfile<TrajOptCompositeProfile>(TRAJOPT_DEFAULT_NAMESPACE, "UR5", composite_profile);
 
-  auto plan_profile = std::make_shared<TrajOptDefaultPlanProfile>();
-  plan_profile->cartesian_coeff = Eigen::VectorXd::Constant(6, 1, 10);
-  // plan_profile->cartesian_coeff(0) = 0;
-  // plan_profile->cartesian_coeff(1) = 0;
-  // plan_profile->cartesian_coeff(2) = 0;
 
-  // Add profile to Dictionary
+  /////////////////////////////////////////////
+  //                                         //
+  //     2. TrajOptDefaultPlanProfile        //
+  //                                         //
+  /////////////////////////////////////////////
+  auto plan_profile = std::make_shared<TrajOptDefaultPlanProfile>();
+  
+  plan_profile->cartesian_coeff = Eigen::VectorXd::Constant(1, 1, 5); // default = (1, 1, 5)
+
+  plan_profile->joint_coeff = Eigen::VectorXd::Constant(1, 1, 5); // default = (1, 1, 5)
+
+  plan_profile->term_type = trajopt::TermType::TT_CNT; // default = TT_CNT
+
+  // Добавление профиля в словарь
   profiles->addProfile<TrajOptPlanProfile>(TRAJOPT_DEFAULT_NAMESPACE, "UR5", plan_profile);
 
 
-  auto trajopt_solver_profile = std::make_shared<TrajOptDefaultSolverProfile>();
-  trajopt_solver_profile->opt_info.max_iter = 100;
+  /////////////////////////////////////////////
+  //                                         //
+  //     3. TrajOptDefaultSolverProfile      //
+  //                                         //
+  /////////////////////////////////////////////
 
+  auto trajopt_solver_profile = std::make_shared<TrajOptDefaultSolverProfile>();
+
+  // Используемый выпуклый решатель
+  trajopt_solver_profile->convex_solver = sco::ModelType::OSQP; // default = OSQP
+
+  // Конфигурация convex solver для использования, если NULL используются настройки по умолчанию
+  trajopt_solver_profile->convex_solver_config = nullptr; // default = nullptr
+
+  /////////////////////////////////////////////
+  //                                         //
+  //     BasicTrustRegionSQPParameters       //
+  //                                         //
+  /////////////////////////////////////////////
+
+  // !! Значения по умолчанию не заданы !!
+  // но можно задать значения, перед этим раскомментировать
+
+  // trajopt_solver_profile->opt_info.improve_ratio_threshold = 0;   // минимальное соотношение true_improve/approx_improve
+  //                                                                 // принять шаг
+  // trajopt_solver_profile->opt_info.min_trust_box_size = 0;        // если область доверия станет еще меньше, выйдите и
+  //                                                                 // отчет о сходимости
+  // trajopt_solver_profile->opt_info.min_approx_improve = 0;        // если модель улучшается меньше этого, выйдите и
+  //                                                                 // отчет о сходимости
+  // trajopt_solver_profile->opt_info.min_approx_improve_frac = 0;   // если модель улучшается меньше этого, выйдите и
+  //                                                                 // отчет о сходимости
+  // trajopt_solver_profile->opt_info.max_iter = 0;                  // Максимальное количество итераций
+  // trajopt_solver_profile->opt_info.trust_shrink_ratio = 0;        // если улучшение меньше, чем
+  //                                                                 // improve_ratio_threshold, сократите область доверия за счет
+  //                                                                 // это соотношения
+  // trajopt_solver_profile->opt_info.trust_expand_ratio = 0;        // если улучшение меньше, чем
+  //                                                                 // improve_ratio_threshold, сократите область доверия за счет
+  //                                                                 // это соотношения
+  // trajopt_solver_profile->opt_info.cnt_tolerance = 0;             // после сходимости штрафной подзадачи, если
+  //                                                                 // нарушение ограничений - это нечто меньшее, чем это, мы закончили
+
+  // // Максимальное количество раз, в которое будет увеличена стоимость ограничений
+  // trajopt_solver_profile->opt_info.max_merit_coeff_increases = 0;
+
+  // // Максимальное количество раз, когда QP-решатель может выйти из строя, прежде чем оптимизация будет прервана
+  // trajopt_solver_profile->opt_info.max_qp_solver_failures = 0;
+
+  // trajopt_solver_profile->opt_info.merit_coeff_increase_ratio = 0;// соотношение, при котором мы увеличиваем коэффициент каждый раз
+
+  // // Максимальное время в секундах, в течение которого будет запущен оптимизатор
+  // trajopt_solver_profile->opt_info.max_time = 0;
+
+  // // Начальный коэффициент, который используется для масштабирования ограничений. Общая стоимость ограничений равна
+  // // constant_value * coeff * merit_coeff
+  // trajopt_solver_profile->opt_info.initial_merit_error_coeff = 0;
+
+  // // Если значение true, коэффициенты заслуг будут завышены только для тех ограничений, которые не сработали.
+  // // Это может помочь, когда ограничений много
+  // trajopt_solver_profile->opt_info.inflate_constraints_individually = true;
+  // trajopt_solver_profile->opt_info.trust_box_size = 0;  // текущий размер доверительного региона (по компонентам)
+
+  // Заносите результаты в файл
+  trajopt_solver_profile->opt_info.log_results = true;
+
+  // Каталог для хранения результатов журнала (по умолчанию: /tmp)
+  trajopt_solver_profile->opt_info.log_dir = "/home/lena/trajopt/logs/solver";
+
+  // Добавление профиля в словарь
   profiles->addProfile<TrajOptSolverProfile>(TRAJOPT_DEFAULT_NAMESPACE, "UR5", trajopt_solver_profile);
+
+  ////////      SETTINGS FINISH      ///////////
+
+
+  time_t rawtime;
+  struct tm * timeinfo;
+  char buffer[80];
+
+  time (&rawtime);
+  timeinfo = localtime(&rawtime);
+  strftime(buffer, sizeof(buffer),"%d-%m-%Y-%H-%M-%S",timeinfo);
+  std::string datetime(buffer);
+
+  std::cout << "datetime: " << datetime << std::endl;
 
   auto post_check_profile = std::make_shared<ContactCheckProfile>();
   profiles->addProfile<ContactCheckProfile>(TRAJOPT_DEFAULT_NAMESPACE, "UR5", post_check_profile);

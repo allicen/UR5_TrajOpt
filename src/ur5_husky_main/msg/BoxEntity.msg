@@ -1,0 +1,16 @@
+int32 id
+string name
+float64 length
+float64 width
+float64 height
+float64 x
+float64 y
+float64 z
+float64 offsetX
+float64 offsetY
+float64 offsetZ
+float64 rotateX
+float64 rotateY
+float64 rotateZ
+string colorByName
+ur5_husky_main/Color color

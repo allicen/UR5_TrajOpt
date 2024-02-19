@@ -19,6 +19,10 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <ur5_husky_main/Box.h>
 #include <ur5_husky_main/Mesh.h>
+#include <ur5_husky_main/ObstacleGroup.h>
+#include <ur5_husky_main/ObstacleDeleteGroup.h>
+#include <ur5_husky_main/BoxEntity.h>
+#include <ur5_husky_main/MeshEntity.h>
 #include <ur5_husky_main/SetJointState.h>
 #include <ur5_husky_main/GetJointState.h>
 #include <ur5_husky_main/RobotPlanTrajectory.h>
@@ -396,6 +400,205 @@ bool createMesh(ur5_husky_main::Mesh::Request &req,
   }
 
   res.result = "Create mesh success";
+  return true;
+}
+
+
+
+bool deleteObstacleGroup(ur5_husky_main::ObstacleDeleteGroup::Request &req,
+                        ur5_husky_main::ObstacleDeleteGroup::Response &res,
+                        const std::shared_ptr<tesseract_environment::Environment> &env,
+                        ros::Rate &loop_rate) {
+
+  std::vector<std::string> mesh_names_success;
+  std::vector<std::string> mesh_names_failed;
+  std::vector<std::string> box_names_success;
+  std::vector<std::string> box_names_failed;
+
+  tesseract_common::Timer stopwatch;
+  stopwatch.start();
+
+  for (int i = 0; i < req.meshes_delete.size(); i++) {
+
+    Command::ConstPtr meshLink = renderRemoveLink(req.meshes_delete[i]);
+    if (env->applyCommand(meshLink)) {
+      mesh_names_success.push_back(req.meshes_delete[i]);
+    } else {
+      mesh_names_failed.push_back(req.meshes_delete[i]);
+    }
+
+    // loop_rate.sleep();
+  }
+
+  for (int i = 0; i < req.boxes_delete.size(); i++) {
+    Command::ConstPtr boxLink = renderRemoveLink(req.boxes_delete[i]);
+    if (env->applyCommand(boxLink)) {
+      box_names_success.push_back(req.boxes_delete[i]);
+    } else {
+      box_names_failed.push_back(req.boxes_delete[i]);
+    }
+
+    // loop_rate.sleep();
+  }
+
+  stopwatch.stop();
+
+  res.message = "Удалены препятствия группы.";
+  res.mesh_names_success = mesh_names_success;
+  res.mesh_names_failed = mesh_names_failed;
+  res.box_names_success = box_names_success;
+  res.box_names_failed = box_names_failed;
+  res.timer = stopwatch.elapsedSeconds();
+
+  return true;
+}
+
+
+
+bool moveObstacleGroup(ur5_husky_main::ObstacleGroup::Request &req,
+                        ur5_husky_main::ObstacleGroup::Response &res,
+                        const std::shared_ptr<tesseract_environment::Environment> &env,
+                        ros::Rate &loop_rate) {
+  
+  std::vector<int> mesh_ids_success;
+  std::vector<int> mesh_ids_failed;
+  std::vector<int> box_ids_success;
+  std::vector<int> box_ids_failed;
+
+  tesseract_common::Timer stopwatch;
+  stopwatch.start();
+
+  for (int i = 0; i < req.boxList.size(); i++) {
+    BoxEntity box = req.boxList[i];
+    std::string joint_name = std::string(box.name) + "_joints";
+
+    Command::Ptr moveBox = renderMove(box.name, joint_name.c_str(), req.offsetX, req.offsetY, req.offsetZ, 0, 0, 0);
+    if (env->applyCommand(moveBox)) {
+      box_ids_success.push_back(box.id);
+    } else {
+      box_ids_failed.push_back(box.id);
+    }
+  }
+
+  for (int i = 0; i < req.meshList.size(); i++) {
+    MeshEntity mesh = req.meshList[i];
+    std::string joint_name = std::string(mesh.name) + "_joints";
+    Command::Ptr moveMesh = renderMove(mesh.name, joint_name.c_str(), req.offsetX, req.offsetY, req.offsetZ, 0, 0, 0);
+    if (env->applyCommand(moveMesh)) {
+      mesh_ids_success.insert(mesh_ids_success.end(), mesh.id);
+    } else {
+      mesh_ids_failed.insert(mesh_ids_failed.end(), mesh.id);
+    }
+  }
+
+  stopwatch.stop();
+  
+  res.box_ids_success = box_ids_success;
+  res.box_ids_failed = box_ids_failed;
+  res.mesh_ids_success = mesh_ids_success;
+  res.mesh_ids_failed = mesh_ids_failed;
+  res.timer = stopwatch.elapsedSeconds();
+
+  res.message = "Группа сдвинута: " + req.name;
+
+  return true;
+}
+
+
+
+bool createObstacleGroup(ur5_husky_main::ObstacleGroup::Request &req,
+                        ur5_husky_main::ObstacleGroup::Response &res,
+                        const std::shared_ptr<tesseract_environment::Environment> &env,
+                        ros::Rate &loop_rate) {
+
+  std::set<int> mesh_ids_success;
+  std::set<int> mesh_ids_failed;
+  std::set<int> box_ids_success;
+  std::set<int> box_ids_failed;
+
+
+  tesseract_common::Timer stopwatch;
+  stopwatch.start();
+
+  // Создать боксы
+  for (int i = 0; i < req.boxList.size(); i++) {
+
+    BoxEntity box = req.boxList[i];
+    std::string joint_name = std::string(box.name) + "_joints";
+    ColorInfo color{box.color.name, box.color.r, box.color.g, box.color.b, box.color.a};
+
+    Command::Ptr boxNew = addBox(box.name, joint_name.c_str(), box.length, box.width, box.height, box.x, box.y, box.z, color);
+    if (env->applyCommand(boxNew)) {
+      box_ids_success.insert(box_ids_success.end(), box.id);
+      std::cout << "Препятствие №" << i+1 << ",  box.id = " << box.id << std::endl;
+    } else {
+      box_ids_failed.insert(box_ids_failed.end(), box.id);
+    }
+
+    // Сдвинуть box
+    Command::Ptr moveBox = renderMove(box.name, joint_name.c_str(), box.offsetX+req.offsetX, box.offsetY+req.offsetY, 
+                                      box.offsetZ+req.offsetZ, box.rotateX, box.rotateY, box.rotateZ);
+    if (env->applyCommand(moveBox)) {
+      box_ids_success.insert(box_ids_success.end(), box.id);
+    } else {
+      box_ids_failed.insert(box_ids_failed.end(), box.id);
+    }
+
+    // loop_rate.sleep();
+  }
+
+  // Создать меши
+  for (int i = 0; i < req.meshList.size(); i++) {
+
+    MeshEntity mesh = req.meshList[i];
+    std::string joint_name = std::string(mesh.name) + "_joints";
+
+    Command::Ptr meshNew = addMesh(mesh.name, joint_name.c_str(), mesh.fileName,
+                    Eigen::Vector3d(mesh.scale, mesh.scale, mesh.scale), 
+                    Eigen::Vector3d(mesh.x, mesh.y, mesh.z), 
+                    Eigen::Vector3d(mesh.rotateX, mesh.rotateY, mesh.rotateZ));
+
+    if (env->applyCommand(meshNew)) {
+      mesh_ids_success.insert(mesh_ids_success.end(), mesh.id);
+    } else {
+      mesh_ids_failed.insert(mesh_ids_failed.end(), mesh.id);
+    }
+
+    // Сдвинуть меш
+    Command::Ptr moveMesh = renderMove(mesh.name, joint_name.c_str(), mesh.offsetX+req.offsetX, mesh.offsetY+req.offsetY, 
+                                      mesh.offsetZ+req.offsetZ, mesh.rotateX, mesh.rotateY, mesh.rotateZ);
+    if (env->applyCommand(moveMesh)) {
+      mesh_ids_success.insert(mesh_ids_success.end(), mesh.id);
+    } else {
+      mesh_ids_failed.insert(mesh_ids_failed.end(), mesh.id);
+    }
+
+    // loop_rate.sleep();
+  }
+
+  stopwatch.stop();
+
+  std::vector<int> b_success;
+  std::copy(box_ids_success.begin(), box_ids_success.end(), std::back_inserter(b_success));
+
+  std::vector<int> b_filed;
+  std::copy(box_ids_failed.begin(), box_ids_failed.end(), std::back_inserter(b_filed));
+
+  std::vector<int> m_success;
+  std::copy(mesh_ids_success.begin(), mesh_ids_success.end(), std::back_inserter(m_success));
+
+  std::vector<int> m_filed;
+  std::copy(mesh_ids_failed.begin(), mesh_ids_failed.end(), std::back_inserter(m_filed));
+
+
+  res.box_ids_success = b_success;
+  res.box_ids_failed = b_filed;
+  res.mesh_ids_success = m_success;
+  res.mesh_ids_failed = m_filed;
+  res.timer = stopwatch.elapsedSeconds();
+
+  res.message = "Группа создана: " + req.name;
+
   return true;
 }
 
@@ -1213,6 +1416,15 @@ int main(int argc, char** argv) {
 
   ros::ServiceServer removeMeshService = nh.advertiseService<ur5_husky_main::Mesh::Request, ur5_husky_main::Mesh::Response>
                       ("remove_mesh", boost::bind(removeMesh, _1, _2, env));
+
+  ros::ServiceServer createObstacleGroupService = nh.advertiseService<ur5_husky_main::ObstacleGroup::Request, ur5_husky_main::ObstacleGroup::Response>
+                      ("create_obstacle_group", boost::bind(createObstacleGroup, _1, _2, env, loop_rate));
+
+  ros::ServiceServer deleteObstacleGroupService = nh.advertiseService<ur5_husky_main::ObstacleDeleteGroup::Request, ur5_husky_main::ObstacleDeleteGroup::Response>
+                      ("delete_obstacle_group", boost::bind(deleteObstacleGroup, _1, _2, env, loop_rate));
+
+  ros::ServiceServer moveObstacleGroupService = nh.advertiseService<ur5_husky_main::ObstacleGroup::Request, ur5_husky_main::ObstacleGroup::Response>
+                      ("move_obstacle_group", boost::bind(moveObstacleGroup, _1, _2, env, loop_rate));
 
   if (debug) {
     console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);

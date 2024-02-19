@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="rosbag" default="false" />
+    <arg name="delay" default="0.0" /> <!-- Время задержки для получения данных с камеры (Задержка в секундах) -->
+    <arg name="gripper_h" default="110" /> <!-- Линия гриппера от нижней части картинки в исходном изображении (1280х720) -->
+    <arg name="gripper_close_w" default="35" /> <!-- Корректировка положения гриппера на камере по ширине изображения (1280х720) -->
+    <arg name="add_size_contour" default="0" /> <!-- Корректировка положения гриппера на камере по ширине изображения (1280х720) -->
+
+    <node name="camera_depth_node" pkg="ur5_husky_camera" type="camera_depth_gripper.py" output="screen">
+        <param name="rosbag" type="bool" value="$(arg rosbag)"/>
+        <param name="delay" type="double" value="$(arg delay)"/>
+        <param name="gripper_h" type="int" value="$(arg gripper_h)"/>
+        <param name="gripper_close_w" type="int" value="$(arg gripper_close_w)"/>
+        <param name="add_size_contour" type="int" value="$(arg add_size_contour)"/>
+    </node>
+</launch>
