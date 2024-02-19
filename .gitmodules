@@ -40,3 +40,15 @@
 [submodule "src/libs_other/rviz_camera_stream"]
 	path = src/libs_other/rviz_camera_stream
 	url = ../../lucasw/rviz_camera_stream
+[submodule "src/octomap/depth_pcd"]
+	path = src/octomap/depth_pcd
+	url = ../../Ladanovasv/depth_pcd
+[submodule "src/octomap/octomap_mapping"]
+	path = src/octomap/octomap_mapping
+	url = ../../OctoMap/octomap_mapping
+[submodule "src/octomap/octomap_msgs"]
+	path = src/octomap/octomap_msgs
+	url = ../../OctoMap/octomap_msgs
+[submodule "src/octomap/octomap_ros"]
+	path = src/octomap/octomap_ros
+	url = ../../OctoMap/octomap_ros

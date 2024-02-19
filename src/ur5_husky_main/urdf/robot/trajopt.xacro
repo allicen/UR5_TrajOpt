@@ -75,7 +75,8 @@
     <parent link="world"/>
     <child link="base_link"/>
     <!-- не трогать xyz и rpy, иначе не считает траекторию! -->
-    <origin xyz="0 0 0.1201" rpy="0 0 0"/>
+    <!-- z=0.1201 -->
+    <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
   <joint name="ur5_to_base_link" type="fixed">

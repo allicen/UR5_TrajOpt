@@ -120,3 +120,6 @@ RUN wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
 RUN sudo apt-get update && apt-get install -y libignition-rendering7-dev
 RUN sudo apt install -y libignition-common5-dev
 RUN sudo apt install -y python3-roslib python3-sensor-msgs python3-opencv
+
+# for octomap
+RUN pip3 install open3d --ignore-installed PyYAML
