@@ -52,3 +52,6 @@
 [submodule "src/octomap/octomap_ros"]
 	path = src/octomap/octomap_ros
 	url = ../../OctoMap/octomap_ros
+[submodule "src/libs_other/interactive_marker_twist_server"]
+	path = src/libs_other/interactive_marker_twist_server
+	url = https://github.com/ros-visualization/interactive_marker_twist_server/

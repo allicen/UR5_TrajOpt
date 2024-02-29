@@ -756,3 +756,35 @@ catkin build robotiq_ft_sensor
 - python3 src/octomap/depth_pcd/scripts/find_block.py
 - rosbag play 6_find_cube.bag
 - rostopic pub  /point  geometry_msgs/Point x:0 y:0 z:0 (???)
+
+
+
+## Отправка сообщений в Gazebo
+
+1 терминал:
+
+```roslaunch ur5_husky_scene run_gazebo.launch```
+
+2 терминал:
+
+```
+rostopic pub /ur5_controller/command trajectory_msgs/JointTrajectory "header:
+  seq: 0
+  stamp:
+    secs: 0
+    nsecs: 0
+  frame_id: ''
+joint_names:
+- 'ur5_shoulder_pan_joint'
+- 'ur5_shoulder_lift_joint'
+- 'ur5_elbow_joint'
+- 'ur5_wrist_1_joint'
+- 'ur5_wrist_2_joint'
+- 'ur5_wrist_3_joint'
+points:
+- positions: [1.59592, -2.8721300000000003, 2.67727, -2.96106, -1.4762199999999996, 0.00031159]
+  velocities: [0,0,0,0,0,0]
+  accelerations: [0,0,0,0,0,0]
+  effort: [0,0,0,0,0,0]
+  time_from_start: {secs: 1, nsecs: 0}" --once
+```
