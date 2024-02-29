@@ -748,3 +748,11 @@ catkin build robotiq_ft_sensor
 
 
 
+## Запуск октомапы
+
+- roslaunch ur5_husky_main run_ur5_husky_trajopt.launch
+- roslaunch depth_pcd rs.launch
+- roslaunch octomap_server octomap_mapping.launch
+- python3 src/octomap/depth_pcd/scripts/find_block.py
+- rosbag play 6_find_cube.bag
+- rostopic pub  /point  geometry_msgs/Point x:0 y:0 z:0 (???)

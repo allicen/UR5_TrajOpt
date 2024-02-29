@@ -5,6 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /PointCloud21
+        - /MarkerArray1
       Splitter Ratio: 0.5
     Tree Height: 242
   # - Class: rviz/Displays
@@ -37,7 +39,9 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Image1
+    SyncSource: 
+      - Image1
+      - PointCloud2
   #- Class: interbotix_xs_rviz/Interbotix Control Panel
   #  Name: Interbotix Control Panel
   #  RobotNameSpace: ""
@@ -122,6 +126,42 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
+      Marker Topic: /occupied_cells_vis_array
+      Name: MarkerArray
+      Namespaces:
+        map: true
+      Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic: /octomap_point_cloud_centers
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
       Marker Topic: /tesseract/display_collisions
       Name: CollisionMarkers
       Namespaces:
@@ -177,7 +217,7 @@ Visualization Manager:
   Global Options:
     Background Color: 0; 176; 240
     Default Light: true
-    Fixed Frame: world
+    Fixed Frame: base_link # world
     Frame Rate: 30
   Name: root
   Tools:
