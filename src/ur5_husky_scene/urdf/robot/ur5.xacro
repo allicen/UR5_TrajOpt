@@ -3,7 +3,7 @@
 
   <xacro:include filename="$(find ur_description)/urdf/ur.transmission.xacro" />
   <xacro:include filename="$(find ur_description)/urdf/ur.gazebo.xacro" />
-  <xacro:include filename="$(find ur5_husky_main)/urdf/robot/ur5_common.xacro" />
+  <xacro:include filename="$(find ur5_husky_scene)/urdf/robot/ur5_common.xacro" />
 
   <xacro:macro name="ur5_robot" params="
     prefix 

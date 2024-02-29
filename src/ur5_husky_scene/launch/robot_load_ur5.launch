@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <arg name="prefix" default="ur5_"/>
+  <arg name="kinematics_config" default="$(find ur5_husky_scene)/config/robot_calibration.yaml"/>
+  <arg name="joint_limits_config" default="$(find ur5_husky_scene)/config/ur5/joint_limits.yaml"/>
+  <arg name="physical_parameters_config" default="$(find ur5_husky_scene)/config/ur5/physical_parameters.yaml"/>
+  <arg name="visual_parameters_file" default="$(find ur5_husky_scene)/config/ur5/visual_parameters.yaml"/>
+
+  <!-- Load universal robot description format (URDF) -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder 
+    '$(find ur5_husky_scene)/urdf/robot/trajopt.xacro' 
+    kinematics_parameters_file:=$(arg kinematics_config) 
+    physical_parameters_file:=$(arg physical_parameters_config)
+    joint_limits_parameters_file:=$(arg joint_limits_config)
+    visual_parameters_file:=$(arg visual_parameters_file)
+  "/>
+
+  <!-- The semantic description that corresponds to the URDF -->
+  <param name="robot_description_semantic" command="$(find xacro)/xacro --inorder '$(find ur5_husky_scene)/urdf/robot/ur5.srdf'" />
+
+</launch>

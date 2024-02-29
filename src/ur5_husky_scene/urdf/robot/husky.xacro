@@ -24,8 +24,8 @@
     <xacro:arg name="cpr_urdf_extras" default="$(optenv CPR_URDF_EXTRAS empty.urdf)" />
 
     <!-- Included URDF/XACRO Files -->
-    <xacro:include filename="$(find ur5_husky_main)/urdf/robot/decorations.urdf.xacro" />
-    <xacro:include filename="$(find ur5_husky_main)/urdf/robot/wheel.urdf.xacro" />
+    <xacro:include filename="$(find ur5_husky_scene)/urdf/robot/decorations.urdf.xacro" />
+    <xacro:include filename="$(find ur5_husky_scene)/urdf/robot/wheel.urdf.xacro" />
 
     <xacro:include filename="$(find husky_description)/urdf/accessories/intel_realsense.urdf.xacro"/>
     <xacro:include filename="$(find husky_description)/urdf/accessories/sensor_arch.urdf.xacro"/>

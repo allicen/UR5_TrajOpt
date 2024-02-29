@@ -10,9 +10,9 @@
   <arg name="connect_robot" default="true"/> <!-- Подключение к роботу (в симуляции или к реальному роботу) -->
   <arg name="delay" default="0.5" />  <!-- Задержка для запуска ноды -->
   <arg name="prefix" default="ur5_"/>
-  <arg name="rvizconfig" default="$(find ur5_husky_main)/config/rviz/trajopt.rviz" />
+  <arg name="rvizconfig" default="$(find ur5_husky_scene)/config/rviz/trajopt.rviz" />
   <arg name="vx300s" default="true"/>
-  <arg name="gazebo" default="false"/>
+  <arg name="gazebo" default="true"/>
   <arg name="script" default=""/> <!-- Название сценария -->
   <arg name="use_robot" default="false"/> <!-- Использовать URSim или UR5 -->
   <arg name="rosbag" default="false" /> <!-- True, если планируется проигрывание сенсорной информации из росбэга -->
@@ -25,11 +25,11 @@
 
   <!-- Load controller configuration -->
   <rosparam command="load" file="$(find husky_control)/config/control.yaml" />
-  <rosparam command="load" file="$(find ur5_husky_main)/config/arm_controller_ur5.yaml" />
-  <rosparam command="load" file="$(find ur5_husky_main)/config/vx300s_trajectory_controllers.yaml"/>
+  <rosparam command="load" file="$(find ur5_husky_scene)/config/arm_controller_ur5.yaml" />
+  <rosparam command="load" file="$(find ur5_husky_scene)/config/vx300s_trajectory_controllers.yaml"/>
 
   <!-- Load robot description -->
-  <include file="$(find ur5_husky_main)/launch/robot_load_ur5.launch" >
+  <include file="$(find ur5_husky_scene)/launch/robot_load_ur5.launch" >
     <arg name="prefix" value="$(arg prefix)" />
   </include>
 
@@ -59,7 +59,7 @@
 
   <!-- Проба для Gazebo -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg gazebo)">
-    <arg name="world_name" value="$(find ur5_husky_main)/worlds/scene.world"/>
+    <arg name="world_name" value="$(find ur5_husky_scene)/worlds/scene.world"/>
     <arg name="paused" value="false"/>
     <arg name="use_sim_time" value="true"/>
     <arg name="gui" value="true"/>

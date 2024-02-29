@@ -217,7 +217,7 @@ Visualization Manager:
   Global Options:
     Background Color: 0; 176; 240
     Default Light: true
-    Fixed Frame: base_link # world
+    Fixed Frame: base_link # local_map_lidar # world
     Frame Rate: 30
   Name: root
   Tools:
