@@ -58,20 +58,20 @@
   <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
 
   <!-- Проба для Gazebo -->
-  <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg gazebo)">
+  <!-- <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg gazebo)">
     <arg name="world_name" value="$(find ur5_husky_scene)/worlds/scene.world"/>
     <arg name="paused" value="false"/>
     <arg name="use_sim_time" value="true"/>
     <arg name="gui" value="true"/>
     <arg name="headless" value="false"/>
     <arg name="debug" value="false"/>
-  </include>
+  </include> -->
 
   <!-- push robot_description to factory and spawn robot in gazebo -->
-  <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model robot -z 0.2" respawn="false" output="screen" if="$(arg gazebo)"/>
+  <!-- <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model robot -z 0.2" respawn="false" output="screen" if="$(arg gazebo)"/> -->
 
   <!-- Start joint state controller -->
-  <node name="controller_spawner" pkg="controller_manager" type="controller_manager" respawn="false" output="screen" args="spawn ur5_controller" if="$(arg gazebo)" />
+  <!-- <node name="controller_spawner" pkg="controller_manager" type="controller_manager" respawn="false" output="screen" args="spawn ur5_controller" if="$(arg gazebo)" /> -->
   <!-- GAZEBO finish -->
 
   <!-- Получение изображений с камеры робота -->
