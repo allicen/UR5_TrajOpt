@@ -47,7 +47,7 @@
 
   <!-- push robot_description to factory and spawn robot in gazebo -->
   <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" 
-        args="-urdf -param robot_description -model robot -z 0.2" respawn="false" output="screen" if="$(arg gazebo)"/>
+        args="-urdf -param robot_description -model robot -z 0.1201" respawn="false" output="screen" if="$(arg gazebo)"/>
 
   <!-- Start joint state controller -->
   <node name="arm_controller_spawner" pkg="controller_manager" type="controller_manager" 
